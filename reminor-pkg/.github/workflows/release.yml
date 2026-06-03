@@ -76,7 +76,7 @@ jobs:
             artifacts/deb-package/*.deb
             artifacts/rpm-package/*.rpm
             artifacts/arch-package/*.pkg.tar.zst
-            reminisc-pkg/PKGBUILD
-            reminisc-pkg/reminor.spec
-            reminisc-pkg/install.sh
+            reminor-pkg/PKGBUILD
+            reminor-pkg/reminor.spec
+            reminor-pkg/install.sh
           generate_release_notes: true
