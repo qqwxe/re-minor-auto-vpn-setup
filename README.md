@@ -29,7 +29,7 @@ reminor
 ### Debian / Ubuntu
 
 ```bash
-sudo add-apt-repository ppa:yourname/reminor
+sudo add-apt-repository ppa:qqwxe/reminor
 sudo apt update
 sudo apt install reminor
 ```
@@ -37,7 +37,7 @@ sudo apt install reminor
 ### RHEL / CentOS / AlmaLinux / Fedora
 
 ```bash
-sudo dnf copr enable yourname/reminor
+sudo dnf copr enable qqwxe/reminor
 sudo dnf install reminor
 ```
 
