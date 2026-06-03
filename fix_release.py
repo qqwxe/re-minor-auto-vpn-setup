@@ -1,4 +1,4 @@
-name: Build and Release
+new_workflow = """name: Build and Release
 
 on:
   push:
@@ -38,7 +38,9 @@ EOF
           sudo apt-get install -y rpm
           mkdir -p ~/rpmbuild/SOURCES ~/rpmbuild/RPMS/noarch
           cp reminor-pkg/src/usr/bin/reminor ~/rpmbuild/SOURCES/
-          rpmbuild -bb --define "_topdir $HOME/rpmbuild"                    --define "_sourcedir $HOME/rpmbuild/SOURCES"                    reminor-pkg/reminor.spec || true
+          rpmbuild -bb --define "_topdir $HOME/rpmbuild" \
+                   --define "_sourcedir $HOME/rpmbuild/SOURCES" \
+                   reminor-pkg/reminor.spec || true
           cp ~/rpmbuild/RPMS/noarch/reminor-*.rpm . || true
 
       - name: Create Release
@@ -60,3 +62,9 @@ EOF
           asset_path: ./reminor_1.0-1_amd64.deb
           asset_name: reminor_1.0-1_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
+"""
+
+f = open(r'c:\Users\ultra\Downloads\протокоыл\.github\workflows\release.yml', 'w', encoding='utf-8')
+f.write(new_workflow)
+f.close()
+print('done')
