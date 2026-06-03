@@ -1,7 +1,7 @@
 Source: reminor
 Section: net
 Priority: optional
-Maintainer: re minor <dev@reminor.local>
+Maintainer: re minor <wintersiemenss@gmail.com>
 Build-Depends: debhelper (>= 10)
 Standards-Version: 4.1.2
 Homepage: https://reminor.local
