@@ -10,17 +10,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install build deps
-        run: sudo apt-get update && sudo apt-get install -y debhelper devscripts
       - name: Build .deb
         run: |
-          cd reminor-pkg
-          dpkg-buildpackage -us -uc -b
-          cp ../reminor_*.deb .
+          mkdir -p reminor-pkg/pkg-deb/DEBIAN
+          mkdir -p reminor-pkg/pkg-deb/usr/bin
+          cp reminor-pkg/src/usr/bin/reminor reminor-pkg/pkg-deb/usr/bin/
+          cat > reminor-pkg/pkg-deb/DEBIAN/control << 'EOF'
+Package: reminor
+Version: 1.0
+Section: net
+Priority: optional
+Architecture: amd64
+Depends: bash, curl, wget, jq, qrencode, openssl, uuid-runtime, net-tools, bc, iproute2
+Maintainer: re minor <dev@reminor.local>
+Description: re minor VPN auto-configurator
+ One-click deployment of VLESS+Reality, Trojan, Hysteria2
+ and AmneziaWG via sing-box.
+EOF
+          chmod 755 reminor-pkg/pkg-deb/DEBIAN
+          dpkg-deb --build reminor-pkg/pkg-deb reminor_1.0-1_amd64.deb
       - uses: actions/upload-artifact@v4
         with:
           name: deb-package
-          path: reminor-pkg/reminor_*.deb
+          path: reminor_1.0-1_amd64.deb
 
   build-rpm:
     runs-on: ubuntu-latest
@@ -46,18 +58,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build .pkg.tar.zst in Docker
+      - name: Install zstd
+        run: sudo apt-get update && sudo apt-get install -y zstd
+      - name: Build .pkg.tar.zst
         run: |
-          docker run --rm -v "$PWD:/src" archlinux bash -c '
-            pacman -Syu --noconfirm base-devel
-            cd /src/reminor-pkg
-            makepkg -s --noconfirm
-            cp reminor-*.pkg.tar.zst /src/
-          '
+          PKGDIR=$(mktemp -d)
+          mkdir -p "$PKGDIR/usr/bin"
+          cp reminor-pkg/src/usr/bin/reminor "$PKGDIR/usr/bin/"
+          mkdir -p "$PKGDIR/.PKGINFO"
+          cat > "$PKGDIR/.PKGINFO" << 'EOF'
+pkgname = reminor
+pkgver = 1.0-1
+pkgdesc = re minor VPN auto-configurator
+arch = x86_64
+license = MIT
+url = https://reminor.local
+EOF
+          cd "$PKGDIR"
+          tar --zstd -cf "$OLDPWD/reminor-1.0-1-x86_64.pkg.tar.zst" .PKGINFO usr
       - uses: actions/upload-artifact@v4
         with:
           name: arch-package
-          path: reminor-*.pkg.tar.zst
+          path: reminor-1.0-1-x86_64.pkg.tar.zst
 
   release:
     needs: [build-deb, build-rpm, build-arch]
