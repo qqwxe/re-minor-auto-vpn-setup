@@ -1,6 +1,6 @@
 # re minor
 
-<img src="assets/butterfly.svg" width="500" alt="re minor butterfly">
+![re minor butterfly](https://github.com/qqwxe/re-minor-VPN-AUTO-INSTALL-/raw/main/assets/butterfly.svg)
 
 > *One-click VPN deployment*
 
