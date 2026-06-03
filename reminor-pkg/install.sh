@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-REPO_URL="https://github.com/qqwxe/re-minor-VPN-AUTO-INSTALL-/releases/latest/download"
+REPO_URL="https://github.com/qqwxe/re-minor-auto-vpn-setup/releases/latest/download"
 
 MINT='\033[38;5;121m'
 PURPLE='\033[38;5;141m'
