@@ -1,4 +1,4 @@
-name: Build and Release
+new_workflow = """name: Build and Release
 
 on:
   push:
@@ -18,3 +18,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" --generate-notes || true
+"""
+
+f = open(r'c:\Users\ultra\Downloads\протокоыл\.github\workflows\release.yml', 'w', encoding='utf-8')
+f.write(new_workflow)
+f.close()
+print('done')
