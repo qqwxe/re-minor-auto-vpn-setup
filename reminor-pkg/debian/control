@@ -1,0 +1,14 @@
+Source: reminor
+Section: net
+Priority: optional
+Maintainer: re minor <dev@reminor.local>
+Build-Depends: debhelper (>= 10)
+Standards-Version: 4.1.2
+Homepage: https://reminor.local
+
+Package: reminor
+Architecture: amd64
+Depends: bash, curl, wget, jq, qrencode, openssl, uuid-runtime, net-tools, bc, iproute2
+Description: re minor VPN auto-configurator
+ One-click deployment of VLESS+Reality, Trojan, Hysteria2
+ and AmneziaWG via sing-box. Includes Telegram bot monitor.

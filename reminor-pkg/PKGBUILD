@@ -1,0 +1,14 @@
+pkgname=reminor
+pkgver=1.0
+pkgrel=1
+pkgdesc="re minor VPN auto-configurator"
+arch=('x86_64')
+url="https://reminor.local"
+license=('MIT')
+depends=('bash' 'curl' 'wget' 'jq' 'qrencode' 'openssl' 'util-linux' 'net-tools' 'bc' 'iproute2')
+source=("reminor")
+md5sums=('SKIP')
+
+package() {
+  install -Dm755 "$srcdir/reminor" "$pkgdir/usr/bin/reminor"
+}

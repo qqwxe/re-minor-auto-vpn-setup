@@ -1,0 +1,82 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-deb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build deps
+        run: sudo apt-get update && sudo apt-get install -y debhelper devscripts
+      - name: Build .deb
+        run: |
+          cd reminor-pkg
+          dpkg-buildpackage -us -uc -b
+          cp ../reminor_*.deb .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb-package
+          path: reminor-pkg/reminor_*.deb
+
+  build-rpm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install RPM tools
+        run: sudo apt-get install -y rpm
+      - name: Build .rpm
+        run: |
+          mkdir -p ~/rpmbuild/SOURCES ~/rpmbuild/RPMS/noarch
+          cp reminor-pkg/src/usr/bin/reminor ~/rpmbuild/SOURCES/
+          rpmbuild -bb --build-in-place reminor-pkg/reminor.spec || \
+            rpmbuild -bb --define "_topdir $HOME/rpmbuild" \
+                     --define "_sourcedir $HOME/rpmbuild/SOURCES" \
+                     reminor-pkg/reminor.spec
+          cp ~/rpmbuild/RPMS/noarch/reminor-*.rpm .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rpm-package
+          path: reminor-*.rpm
+
+  build-arch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build .pkg.tar.zst in Docker
+        run: |
+          docker run --rm -v "$PWD:/src" archlinux bash -c '
+            pacman -Syu --noconfirm base-devel
+            cd /src/reminor-pkg
+            makepkg -s --noconfirm
+            cp reminor-*.pkg.tar.zst /src/
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arch-package
+          path: reminor-*.pkg.tar.zst
+
+  release:
+    needs: [build-deb, build-rpm, build-arch]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/deb-package/*.deb
+            artifacts/rpm-package/*.rpm
+            artifacts/arch-package/*.pkg.tar.zst
+            reminisc-pkg/PKGBUILD
+            reminisc-pkg/reminor.spec
+            reminisc-pkg/install.sh
+          generate_release_notes: true
