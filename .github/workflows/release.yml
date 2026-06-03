@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install dpkg-dev
+        run: sudo apt-get update && sudo apt-get install -y dpkg-dev
       - name: Build .deb
         run: |
           mkdir -p reminor-pkg/pkg-deb/DEBIAN
@@ -65,7 +67,6 @@ EOF
           PKGDIR=$(mktemp -d)
           mkdir -p "$PKGDIR/usr/bin"
           cp reminor-pkg/src/usr/bin/reminor "$PKGDIR/usr/bin/"
-          mkdir -p "$PKGDIR/.PKGINFO"
           cat > "$PKGDIR/.PKGINFO" << 'EOF'
 pkgname = reminor
 pkgver = 1.0-1
@@ -75,7 +76,7 @@ license = MIT
 url = https://reminor.local
 EOF
           cd "$PKGDIR"
-          tar --zstd -cf "$OLDPWD/reminor-1.0-1-x86_64.pkg.tar.zst" .PKGINFO usr
+          tar cf - .PKGINFO usr | zstd -c > "$OLDPWD/reminor-1.0-1-x86_64.pkg.tar.zst"
       - uses: actions/upload-artifact@v4
         with:
           name: arch-package
