@@ -9,63 +9,25 @@ B='\033[1m'
 IP=$(ip -4 route get 1 2>/dev/null|awk '{print $7;exit}'||hostname -I|awk '{print $1}')
 SNI=("www.bayer.de" "www.siemens-healthineers.com" "www.swarovski.com" "www.berghaus.com" "www.deutsche-bank.de" "www.wittchen.com" "www.conrad.de" "www.kloeckner.de" "www.groupon.de" "www.lamy.com" "www.moleskine.com" "www.fissler.com" "www.vaillant.de" "www.wilo.com" "www.brother.de" "www.epson.de" "www.canon.at" "www.nikon.fr" "www.olympus-europa.com" "www.leifheit.de" "www.electrolux.de" "www.miele.de" "www.liebherr.com" "www.neff-home.com" "www.gaggenau.com" "www.blanco.com" "www.schock.de" "www.franke.com" "www.roca.com" "www.hansgrohe.com" "www.grohe.de" "www.duravit.de" "www.villeroy-boch.com" "www.geberit.com" "www.ifworlddesignguide.com" "www.design-milk.com" "www.dezeen.com" "www.archdaily.com" "www.wallpaper.com" "www.ignant.com" "www.itsnicethat.com" "www.creativereview.co.uk")
 OS="";[ -f /etc/os-release ]&&{ . /etc/os-release;OS=$ID; }
-h(){ clear;echo -e "${K}       _      _";echo -e "${K}      / \\${P}    / \\";echo -e "${K}     (   \\${P}  /   )";echo -e "${P}      \\   \/   /  ${C}   [ re minor ]";echo -e "${P}       \\  /\\  /   ${B}${R}    автоматическая конфигурация vpn";echo -e "${C}       /  /\\  \\ ";echo -e "${C}      (  /  \\  )  ${P}    status: ready to deploy";echo -e "${C}       \\_/    \\_/ ";echo -e "${R} --------------------------------------------------------"; }
-g(){ local t="$1" c=("$K" "$P" "$C" "$M") l=${#t} r="";for((i=0;i<l;i++));do r+="${c[$((i%4))]}${t:$i:1}";done;echo -e "${r}${R}"; }
-p(){ echo -ne "${K}re minor ${P}> ${R}"; }
-wp(){ local l=true a=0;while [ "$l" = true ]&&[ $a -lt 15 ];do l=false;for x in dpkg apt yum dnf;do if pgrep -x "$x">/dev/null 2>&1;then l=true;h;g "[ re minor ] ожидание освобождения системного менеджера пакетов...";sleep 1;a=$((a+1));break;fi;done;[ "$l" = false ]&&break;done;if [ $a -ge 15 ];then for x in dpkg apt yum dnf;do pkill -9 "$x" 2>/dev/null||true;done;sleep 2;fi; }
-pkg(){ wp;case "$OS" in ubuntu|debian) apt-get update -y&&apt-get install -y "$1";; almalinux|rocky|rhel|centos) dnf install -y "$1" 2>/dev/null||yum install -y "$1";; arch|manjaro) pacman -S --noconfirm "$1";; fedora) dnf install -y "$1";; esac; }
-deps(){ local a=(curl wget jq qrencode openssl uuid-runtime net-tools bc);if ! command -v ss>/dev/null 2>&1;then a+=(iproute2);fi;for x in "${a[@]}";do if ! command -v "$x">/dev/null 2>&1;then pkg "$x"||true;fi;done;if ! command -v qrencode>/dev/null 2>&1;then pkg libqrencode-dev||pkg qrencode-libs||true;fi; }
-pp(){ h;g "Выбор портов";echo -e "${C}[ 1 ] авто (случайные непопулярные)";echo -e "${C}[ 2 ] ввести вручную";p;read ppch;if [ "$ppch" = "2" ];then echo -ne "${K}VLESS/Trojan порт: ${R}";read VLESS_PORT;VLESS_PORT=$(fp "$VLESS_PORT");TROJAN_PORT="$VLESS_PORT";echo -ne "${K}Hysteria порт: ${R}";read HYSTERIA_PORT;HYSTERIA_PORT=$(fp "$HYSTERIA_PORT");else VLESS_PORT=$(rp);TROJAN_PORT=$(rp);HYSTERIA_PORT=$(rp);fi;g "Порты: VLESS/Trojan ${VLESS_PORT}, Hysteria ${HYSTERIA_PORT}";sleep 1; }
-rp(){ while true;do local p=$((10000+RANDOM%50001));if ! ss -tulpn 2>/dev/null|grep -q ":${p}\\b";then echo "$p";return;fi;done; }
-fp(){ local p=$1;while ss -tulpn 2>/dev/null|grep -q ":${p}\\b";do p=$((p+1));done;echo "$p"; }
-op(){ local p=$1 t=${2:-tcp};if command -v ufw>/dev/null 2>&1;then ufw allow "${p}/${t}">/dev/null 2>&1||true;elif command -v firewall-cmd>/dev/null 2>&1;then firewall-cmd --permanent --add-port="${p}/${t}">/dev/null 2>&1||true;firewall-cmd --reload>/dev/null 2>&1||true;elif command -v iptables>/dev/null 2>&1;then iptables -I INPUT -p "$t" --dport "$p" -j ACCEPT>/dev/null 2>&1||true;fi; }
-ap(){ op "$VLESS_PORT" tcp;op "$TROJAN_PORT" tcp;op "$HYSTERIA_PORT" udp;op "$HYSTERIA_PORT" tcp;op 51820 udp; }
-sb(){ if command -v sing-box>/dev/null 2>&1;then return 0;fi;local u=$(curl -sL "https://api.github.com/repos/SagerNet/sing-box/releases/latest"|grep -o '"browser_download_url": "[^"]*linux_amd64\\.deb"'|head -1|sed 's/.*"\\(.*\\)".*/\\1/');if [ -z "$u" ];then u=$(curl -sL "https://api.github.com/repos/SagerNet/sing-box/releases/latest"|grep -o '"browser_download_url": "[^"]*linux_amd64[^"]*"'|head -1|sed 's/.*"\\(.*\\)".*/\\1/');fi;if [ -n "$u" ];then wget -q -O /tmp/sb.pkg "$u";case "$OS" in ubuntu|debian) dpkg -i /tmp/sb.pkg>/dev/null 2>&1||apt-get install -f -y>/dev/null 2>&1;; *) if [[ "$u" == *.tar.gz ]];then tar -xzf /tmp/sb.pkg -C /tmp/;cp /tmp/sing-box*/sing-box /usr/local/bin/sing-box 2>/dev/null||cp /tmp/sing-box /usr/local/bin/sing-box 2>/dev/null;chmod +x /usr/local/bin/sing-box;fi;;esac;rm -f /tmp/sb.pkg;fi;if ! command -v sing-box>/dev/null 2>&1;then curl -sL "https://github.com/SagerNet/sing-box/releases/latest/download/install.sh"|bash||{ wget -qO /usr/local/bin/sing-box "https://github.com/SagerNet/sing-box/releases/latest/download/sing-box-linux-amd64";chmod +x /usr/local/bin/sing-box; };fi; }
-gu(){ if command -v uuidgen>/dev/null 2>&1;then uuidgen;else cat /proc/sys/kernel/random/uuid 2>/dev/null||openssl rand -hex 16|sed 's/\\(..\\)/\\1-/g;s/-\\(.\\)-\\(.\\)-\\(.\\)-\\(.\\)/-\\1\\2-\\3\\4/;s/^\\(.*\\)-$/\\1/';fi; }
-gp(){ openssl rand -base64 16; }
-ga(){ local JC=$((1+RANDOM%1000)) JMIN=$((1+RANDOM%1000)) JMAX=$((1+RANDOM%1000));while [ "$JMIN" -ge "$JMAX" ];do JMAX=$((1+RANDOM%1000));done;echo "$JC $JMIN $JMAX"; }
-sp(){ h;g "Выбор SNI";echo -e "${C}[ 1 ] авто (непопулярный домен)";echo -e "${C}[ 2 ] ввести свой";p;read spch;if [ "$spch" = "2" ];then echo -ne "${K}Ваш SNI: ${R}";read SNI_OVERRIDE;fi; }
-gs(){ if [ -n "$SNI_OVERRIDE" ];then echo "$SNI_OVERRIDE";return;fi;local i=$((RANDOM%${#SNI[@]}));echo "${SNI[$i]}"; }
-sc(){ local a=($1) f="/etc/sing-box/config.json" i=() o='[{"type":"direct","tag":"direct"},{"type":"block","tag":"block"}]' r='{"rules":[{"ip_is_private":true,"outbound":"direct"},{"outbound":"direct"}],"final":"direct","auto_detect_interface":true}';local u=$(gu) w=$(gp) s=$(gs) rk=$(sing-box generate reality-keypair 2>/dev/null) pk=$(echo "$rk"|grep "PrivateKey"|awk '{print $2}') bk=$(echo "$rk"|grep "PublicKey"|awk '{print $2}');mkdir -p /etc/sing-box;echo "{\"uuid\":\"${u}\",\"password\":\"${w}\",\"sni\":\"${s}\",\"public_key\":\"${bk}\",\"private_key\":\"${pk}\",\"vless_port\":${VLESS_PORT},\"trojan_port\":${TROJAN_PORT},\"hysteria_port\":${HYSTERIA_PORT}}">/etc/sing-box/meta.json;for x in "${a[@]}";do case "$x" in vless) i+=("{\"type\":\"vless\",\"listen\":\"::\",\"listen_port\":${VLESS_PORT},\"users\":[{\"uuid\":\"${u}\",\"flow\":\"xtls-rprx-vision\"}],\"tls\":{\"enabled\":true,\"server_name\":\"${s}\",\"reality\":{\"enabled\":true,\"handshake\":{\"server\":\"${s}\",\"server_port\":443},\"private_key\":\"${pk}\",\"short_id\":\"$(openssl rand -hex 4)\"}},\"transport\":{\"type\":\"tcp\"}}");; trojan) i+=("{\"type\":\"trojan\",\"listen\":\"::\",\"listen_port\":${TROJAN_PORT},\"users\":[{\"password\":\"${w}\"}],\"tls\":{\"enabled\":true,\"server_name\":\"${s}\",\"reality\":{\"enabled\":true,\"handshake\":{\"server\":\"${s}\",\"server_port\":443},\"private_key\":\"${pk}\",\"short_id\":\"$(openssl rand -hex 4)\"}}}");; hysteria) hc;i+=("{\"type\":\"hysteria2\",\"listen\":\"::\",\"listen_port\":${HYSTERIA_PORT},\"users\":[{\"password\":\"${w}\"}],\"tls\":{\"enabled\":true,\"certificate_path\":\"/etc/sing-box/certs/hysteria.crt\",\"key_path\":\"/etc/sing-box/certs/hysteria.key\"},\"masquerade\":\"https://www.bing.com\",\"ignore_client_bandwidth\":false}");; amneziawg) read -r JC JMIN JMAX<<<"$(ga)";local ap=$(wg genkey 2>/dev/null||openssl rand -base64 32) ab=$(echo "$ap"|wg pubkey 2>/dev/null||echo "$ap");echo "{\"awg_private\":\"${ap}\",\"awg_public\":\"${ab}\",\"jc\":${JC},\"jmin\":${JMIN},\"jmax\":${JMAX}}">/etc/sing-box/awg_meta.json;i+=("{\"type\":\"amneziawg\",\"listen_port\":51820,\"private_key\":\"${ap}\",\"peers\":[{\"allowed_ips\":\"0.0.0.0/0,::/0\",\"persistent_keepalive\":25,\"persistent_keepalive_interval\":25}]}");;esac;done;local ij=$(IFS=,;echo "${i[*]}");echo "{\"log\":{\"level\":\"info\",\"output\":\"/var/log/sing-box.log\"},\"dns\":{\"servers\":[{\"address\":\"tls://1.1.1.1\"},{\"address\":\"tls://8.8.8.8\"},{\"address\":\"rcode://success\",\"tag\":\"block\"}]},\"inbounds\":[${ij}],\"outbounds\":${o},\"route\":${r}}"|jq .>"$f";chmod 600 "$f"; }
-eb(){ if [ -f /proc/sys/net/ipv4/tcp_congestion_control ];then local c=$(cat /proc/sys/net/ipv4/tcp_congestion_control);if [ "$c" != "bbr" ];then modprobe tcp_bbr 2>/dev/null||true;echo "net.core.default_qdisc=fq">>/etc/sysctl.conf 2>/dev/null||true;echo "net.ipv4.tcp_congestion_control=bbr">>/etc/sysctl.conf 2>/dev/null||true;sysctl -p>/dev/null 2>&1||true;fi;fi; }
-st(){ cat >/etc/systemd/system/sing-box.service <<EOF
-[Unit]
-Description=sing-box service
-After=network.target nss-lookup.target
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/sing-box run -c /etc/sing-box/config.json
-Restart=on-failure
-RestartSec=10s
-LimitNOFILE=infinity
-[Install]
-WantedBy=multi-user.target
-EOF
-systemctl daemon-reload;systemctl enable sing-box>/dev/null 2>&1;systemctl restart sing-box;sleep 2; }
-vl(){ local m="/etc/sing-box/meta.json";local u=$(jq -r '.uuid' "$m") s=$(jq -r '.sni' "$m") b=$(jq -r '.public_key' "$m") p=$(jq -r '.vless_port' "$m") i=$(openssl rand -hex 4);echo "vless://${u}@${IP}:${p}?security=reality&sni=${s}&fp=chrome&pbk=${b}&sid=${i}&type=tcp&flow=xtls-rprx-vision#re-minor-vless"; }
-tl(){ local m="/etc/sing-box/meta.json";local w=$(jq -r '.password' "$m") s=$(jq -r '.sni' "$m") b=$(jq -r '.public_key' "$m") p=$(jq -r '.trojan_port' "$m") i=$(openssl rand -hex 4);echo "trojan://${w}@${IP}:${p}?security=reality&sni=${s}&fp=chrome&pbk=${b}&sid=${i}&type=tcp#re-minor-trojan"; }
-hl(){ local m="/etc/sing-box/meta.json";local w=$(jq -r '.password' "$m") p=$(jq -r '.hysteria_port' "$m");echo "hysteria2://${w}@${IP}:${p}?sni=www.bing.com&insecure=1#re-minor-hysteria2"; }
-aw(){ local a="/etc/sing-box/awg_meta.json";[ ! -f "$a" ]&&return;local j=$(jq -r '.jc' "$a") n=$(jq -r '.jmin' "$a") x=$(jq -r '.jmax' "$a") b=$(jq -r '.awg_public' "$a");cat<<EOF
-[Interface]
-PrivateKey = YOUR_PRIVATE_KEY
-Address = 10.0.0.2/32
-DNS = 1.1.1.1, 8.8.8.8
-Jc = ${j}
-Jmin = ${n}
-Jmax = ${x}
-S1 = 0
-S2 = 0
-H1 = 1
-H2 = 2
-H3 = 3
-H4 = 4
-[Peer]
-PublicKey = ${b}
-AllowedIPs = 0.0.0.0/0, ::/0
-PersistentKeepalive = 25
-Endpoint = ${IP}:51820
-EOF
-}
+h(){ clear;echo -e "${K}                \`         '";
+echo -e "${K};,,,             \`       '             ,,,;";
+echo -e "${K}\`YES8888bo.       :     :       .od8888YES'";
+echo -e "${K}  888IO8DO88b.     :   :     .d8888I8DO88";
+echo -e "${P}  8LOVEY'  \`Y8b.   \`   '   .d8Y'  \`YLOVE8";
+echo -e "${P} jTHEE!  .db.  Yb. '   ' .dY  .db.  8THEE!";
+echo -e "${P}   \`888  Y88Y    \`b ( ) d'    Y88Y  888'";
+echo -e "${P}    8MYb  '""        ,',        "'"  dMY8";
+echo -e "${C}   j8prECIOUSgf"'   ':'   \`"?g8prECIOUSk";
+echo -e "${C}     'Y'   .8'     d' 'b     '8.   'Y'";
+echo -e "${C}      !   .8' db  d'; ;\`b  db '8.   !";
+echo -e "${C}         d88  \`'  8 ; ; 8  \`'  88b";
+echo -e "${M}        d88Ib   .g8 ',' 8g.   dI88b";
+echo -e "${M}       :888LOVE88Y'     'Y88LOVE888:";
+echo -e "${M}       '! THEE888'       \`888THEE !'";
+echo -e "${M}          '8Y  \`Y         Y'  Y8'";
+echo -e "${R}           Y                   Y";
+echo -e "${R}           !                   !";
+echo -e "${R} --------------------------------------------------------"; }
 sub(){ local c=$1;local v=$(vl) t=$(tl) y=$(hl);local l="${v}\\n${t}\\n${y}";mkdir -p /var/www/html;printf "%b" "$l">/var/www/html/re-minor-sub.txt;if [ "$c" = "hiddify" ];then local e=$(echo -e "$l"|base64 -w0);echo "$e">/var/www/html/re-minor-hiddify.txt;fi;echo "http://${IP}/re-minor-sub.txt"; }
 qr(){ local l="$1" n="$2";echo -e "\\n${C}${n}${R}";echo -e "${M}${l}${R}";echo "$l"|qrencode -t ansiutf8 -l L 2>/dev/null||echo -e "${K}[ qrencode не установлен ]${R}"; }
 bt(){ local t="$1" i="$2";cat >/usr/local/bin/re_minor_bot.sh <<EOF

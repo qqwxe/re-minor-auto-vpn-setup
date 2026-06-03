@@ -1,15 +1,8 @@
 # re minor
 
-```
-       _      _
-      / \    / \
-     (   \  /   )
-      \   \/   /       [ re minor ]
-       \  /\  /        автоматическая конфигурация vpn
-       /  /\  \
-      (  /  \  )
-       \_/    \_/
-```
+<img src="assets/butterfly.svg" width="500" alt="re minor butterfly">
+
+> *One-click VPN deployment*
 
 **One-click VPN deployment.** Строгий, пафосный, футуристичный CLI-инсталлятор для Linux. Сканирует систему, подбирает непопулярные порты и SNI, накатывает ядро sing-box, генерирует QR-коды и ссылки — всё автоматически.
 
