@@ -1,4 +1,4 @@
-name: Build and Release
+new_workflow = """name: Build and Release
 
 on:
   push:
@@ -38,11 +38,26 @@ EOF
           sudo apt-get install -y rpm
           mkdir -p ~/rpmbuild/SOURCES ~/rpmbuild/RPMS/noarch
           cp reminor-pkg/src/usr/bin/reminor ~/rpmbuild/SOURCES/
-          rpmbuild -bb --define "_topdir $HOME/rpmbuild"                    --define "_sourcedir $HOME/rpmbuild/SOURCES"                    reminor-pkg/reminor.spec || true
+          rpmbuild -bb --define "_topdir $HOME/rpmbuild" \
+                   --define "_sourcedir $HOME/rpmbuild/SOURCES" \
+                   reminor-pkg/reminor.spec || true
           cp ~/rpmbuild/RPMS/noarch/reminor-*.rpm . || true
 
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ github.ref_name }}"             --title "${{ github.ref_name }}"             --generate-notes             reminor_1.0-1_amd64.deb             reminor-*.rpm             reminor-pkg/install.sh             reminor-pkg/PKGBUILD             reminor-pkg/reminor.spec || true
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --generate-notes \
+            reminor_1.0-1_amd64.deb \
+            reminor-*.rpm \
+            reminor-pkg/install.sh \
+            reminor-pkg/PKGBUILD \
+            reminor-pkg/reminor.spec || true
+"""
+
+f = open(r'c:\Users\ultra\Downloads\протокоыл\.github\workflows\release.yml', 'w', encoding='utf-8')
+f.write(new_workflow)
+f.close()
+print('done')
