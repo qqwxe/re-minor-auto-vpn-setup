@@ -30,9 +30,14 @@ OS=$(detect_os)
 case "$OS" in
     deb)
         echo -e "${CYAN}[*] Debian/Ubuntu detected${RESET}"
-        curl -sL -o /tmp/reminor.deb "${REPO_URL}/reminor_1.0-1_amd64.deb"
-        sudo dpkg -i /tmp/reminor.deb || sudo apt-get install -f -y
-        rm -f /tmp/reminor.deb
+        echo -e "${CYAN}[*] Trying PPA first...${RESET}"
+        if sudo add-apt-repository -y ppa:qqwxe/reminor 2>/dev/null && sudo apt update -qq && sudo apt install -y reminor 2>/dev/null; then
+            echo -e "${MINT}[+] Installed from PPA${RESET}"
+        else
+            echo -e "${PINK}[!] PPA failed, falling back to direct install${RESET}"
+            sudo curl -sL -o /usr/local/bin/reminor "${REPO_URL}/re_minor.sh"
+            sudo chmod +x /usr/local/bin/reminor
+        fi
         ;;
     rpm)
         echo -e "${CYAN}[*] RHEL/Fedora detected${RESET}"
