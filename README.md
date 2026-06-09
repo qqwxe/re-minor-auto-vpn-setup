@@ -1,10 +1,12 @@
-# re minor
+# re minor — VPN Auto Setup & One-Click Installer for Linux
 
 ![re minor butterfly](https://github.com/qqwxe/re-minor-VPN-AUTO-INSTALL-/raw/main/assets/butterfly.svg)
 
-> *One-click VPN deployment*
+> *One-click VPN auto deployment for Ubuntu, Debian, RHEL, CentOS, Fedora, Arch, and Manjaro*
 
-**One-click VPN deployment.** Строгий, пафосный, футуристичный CLI-инсталлятор для Linux. Сканирует систему, подбирает непопулярные порты и SNI, накатывает ядро sing-box, генерирует QR-коды и ссылки — всё автоматически.
+**re minor** is a one-click VPN auto installer and setup tool for Linux. It deploys VLESS + Reality, Trojan + Reality, Hysteria 2, and AmneziaWG automatically using sing-box. The script scans your system, picks random unblocked ports and SNI domains, installs dependencies, generates QR codes and subscription links — all in one command.
+
+**Keywords:** vpn installer, vless reality, trojan reality, hysteria 2 setup, amneziawg installer, sing-box auto config, linux vpn setup, ubuntu vpn, debian proxy, bash vpn script, one click vpn.
 
 ## Features
 
