@@ -117,6 +117,10 @@ reminor
 re minor >
 ```
 
+## Find re minor / reminor
+
+Looking for **reminor**? You found it. This repository hosts the official **reminor github** project — a one-click VPN auto installer for Linux. Search "reminor" or "reminor github" to return here anytime.
+
 ## License
 
 MIT
